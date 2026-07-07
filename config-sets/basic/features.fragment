@@ -1,0 +1,20 @@
+# PolyLinux Basic runtime and setup tools only. Do not include FM-level packages here.
+BR2_PACKAGE_BUSYBOX=y
+BR2_PACKAGE_BASH=y
+BR2_PACKAGE_FILE=y
+BR2_PACKAGE_FINDUTILS=y
+BR2_PACKAGE_GREP=y
+BR2_PACKAGE_GAWK=y
+BR2_PACKAGE_SED=y
+BR2_PACKAGE_COREUTILS=y
+BR2_PACKAGE_COREUTILS_INDIVIDUAL_BINARIES=y
+BR2_PACKAGE_SHADOW=y
+
+# Generate the rootfs format consumed by the PolyLinux v86 page.
+BR2_TARGET_ROOTFS_CPIO=y
+BR2_TARGET_ROOTFS_CPIO_FULL=y
+BR2_TARGET_ROOTFS_CPIO_GZIP=y
+
+# Avoid relying on disk images for browser delivery.
+# BR2_TARGET_ROOTFS_EXT2 is not set
+# BR2_TARGET_ROOTFS_TAR is not set
