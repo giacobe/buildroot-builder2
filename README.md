@@ -70,6 +70,12 @@ setup script defaults to `2026.02.3`, the current February LTS line as of
 `BUILDROOT_VERSION=2025.02.15` before running setup, or update the config set
 and rerun `make olddefconfig`.
 
+The config sets intentionally do not enable `BR2_DOWNLOAD_FORCE_CHECK_HASHES`.
+They use a custom Linux version for the v86-compatible kernel profile, and newer
+Buildroot releases may not ship a hash entry for that exact Linux tarball. If
+forced hash checking is enabled, Buildroot can fail with `No hash found for
+linux-<version>.tar.xz`.
+
 ## Host Dependencies
 
 On Ubuntu/Debian, `scripts/01-setup-buildroot.sh` installs the usual Buildroot

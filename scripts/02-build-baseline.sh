@@ -55,6 +55,10 @@ cp "$DEFCONFIG" "$BUILD_OUTPUT/.config"
 if [ -f "$FRAGMENT" ]; then
   cat "$FRAGMENT" >> "$BUILD_OUTPUT/.config"
 fi
+if grep -q '^BR2_DOWNLOAD_FORCE_CHECK_HASHES=y$' "$BUILD_OUTPUT/.config"; then
+  echo "Removing BR2_DOWNLOAD_FORCE_CHECK_HASHES=y for custom Linux tarball compatibility."
+  sed -i '/^BR2_DOWNLOAD_FORCE_CHECK_HASHES=y$/d' "$BUILD_OUTPUT/.config"
+fi
 
 echo "Running olddefconfig for $SELECTED"
 make -C "$BUILDROOT_SRC" O="$BUILD_OUTPUT" olddefconfig | tee "$PACKAGE_DIR/logs/olddefconfig.log"
