@@ -1,4 +1,4 @@
-# PolyLinux Builder
+# Buildroot Builder2
 
 This directory is the clone-and-run workflow for building PolyLinux/v86 image
 pairs and then adding lab payload files to `/root`.
