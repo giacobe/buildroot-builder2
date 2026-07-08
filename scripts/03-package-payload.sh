@@ -3,8 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 BUILDER_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd)
-REPO_ROOT=$(cd -- "$BUILDER_DIR/.." && pwd)
-PACKAGER="$REPO_ROOT/tools/package_rootfs_payload.py"
+PACKAGER="$SCRIPT_DIR/package_rootfs_payload.py"
 
 REPO_URL=
 REF=
