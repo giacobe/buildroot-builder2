@@ -20,10 +20,11 @@ toolchain; do not build inside a Windows-synced directory.
 ## Quick Start
 
 ```sh
-cd polylinux-builder
+git clone https://github.com/giacobe/buildroot-builder2.git
+cd buildroot-builder2
 
-# Optional: override the default LTS release.
-# export BUILDROOT_VERSION=2025.02.15
+# The checked-in configurations are validated against this release.
+export BUILDROOT_VERSION=2025.02.15
 
 scripts/01-setup-buildroot.sh
 scripts/02-build-baseline.sh
@@ -57,12 +58,27 @@ config-sets/<name>/
   README.md
 ```
 
-Current sets:
+Current sets and their intended lab payloads:
 
-- `basic`: shell and setup commands used by simple labs.
-- `basic-compression`: `basic` plus archive/compression and inspection tools.
-- `basic-compression-networking`: `basic-compression` plus common networking
-  tools.
+| Configuration | Purpose | Labs |
+| --- | --- | --- |
+| `basic` | Core shell, filesystem, file-manipulation, and text-processing commands | 1, 2, 3, 5, 6, 8, 11 |
+| `basic-compression` | `basic` plus archive, compression, encoding, and inspection tools | 10, 13, 14 |
+| `basic-compression-networking` | `basic-compression` plus IP, DNS, HTTP, and SSH tools | 9 |
+| `basic-processes` | `basic` plus procps-ng process inspection and priority tools | 7 |
+
+Every configuration directory contains all four authoritative inputs:
+
+| File | Role |
+| --- | --- |
+| `defconfig` | Complete Buildroot configuration loaded by the build script |
+| `features.fragment` | Human-reviewable list of the profile's significant package selections |
+| `required-commands.txt` | Commands that must be present in the finished guest |
+| `README.md` | Profile scope, rationale, and profile-specific validation notes |
+
+Use the smallest configuration that satisfies a lab. Labs 4 and 12 do not yet
+have payload repositories, so their final configuration assignment remains a
+tracked migration decision rather than a checked-in mapping.
 
 The existing config sets were developed against Buildroot `2025.02.15`. The
 setup script defaults to `2026.02.3`, the current February LTS line as of

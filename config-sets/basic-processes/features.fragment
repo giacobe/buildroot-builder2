@@ -1,0 +1,28 @@
+# PolyLinux Basic plus full process inspection and job-control support.
+
+# Basic runtime and lab setup tools.
+BR2_PACKAGE_BUSYBOX=y
+BR2_PACKAGE_BUSYBOX_SHOW_OTHERS=y
+BR2_PACKAGE_BASH=y
+BR2_PACKAGE_FILE=y
+BR2_PACKAGE_FINDUTILS=y
+BR2_PACKAGE_GREP=y
+BR2_PACKAGE_GAWK=y
+BR2_PACKAGE_SED=y
+BR2_PACKAGE_COREUTILS=y
+BR2_PACKAGE_COREUTILS_INDIVIDUAL_BINARIES=y
+BR2_PACKAGE_SHADOW=y
+
+# procps-ng supplies full ps, top, and renice behavior.
+BR2_PACKAGE_PROCPS_NG=y
+BR2_PACKAGE_PROCPS_NG_ORIGINAL_TOP=y
+
+# Generate the rootfs format consumed by the PolyLinux v86 page.
+BR2_TARGET_ROOTFS_CPIO=y
+BR2_TARGET_ROOTFS_CPIO_FULL=y
+BR2_TARGET_ROOTFS_CPIO_GZIP=y
+
+# Avoid relying on disk images for browser delivery.
+# BR2_TARGET_ROOTFS_EXT2 is not set
+# BR2_TARGET_ROOTFS_TAR is not set
+
