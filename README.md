@@ -111,3 +111,7 @@ scripts/01-setup-buildroot.sh --skip-deps
 
 The payload packaging script only needs Python 3. It parses and writes gzipped
 `newc` cpio archives directly, so it does not need host `cpio`.
+
+## License
+
+Licensed under the GNU General Public License v3.0. See `LICENSE`.
