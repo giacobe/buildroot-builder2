@@ -14,6 +14,11 @@ The workflow has three stages:
    and calls `tools/package_rootfs_payload.py` to merge those files into `/root`
    of the selected baseline rootfs.
 
+During packaging, Windows CRLF line endings in every non-binary payload file are
+normalized to Unix LF. This protects shell scripts, login profiles, and helper
+commands when a repository was checked out or prepared on Windows. Files
+containing NUL bytes are treated as binary and are not modified.
+
 Run these scripts on Linux. Buildroot requires a real Linux filesystem and host
 toolchain; do not build inside a Windows-synced directory.
 

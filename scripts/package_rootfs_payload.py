@@ -183,6 +183,13 @@ def payload_file_mode(path: Path, payload_dir: Path, executable_policy: str) -> 
     return stat.S_IFREG | (0o755 if executable else 0o644)
 
 
+def normalize_payload_text(data: bytes) -> bytes:
+    """Convert Windows CRLF to Unix LF without modifying binary payloads."""
+    if b"\x00" in data:
+        return data
+    return data.replace(b"\r\n", b"\n")
+
+
 def build_payload_entries(
     payload_dir: Path,
     archive_dest: str,
@@ -233,6 +240,7 @@ def build_payload_entries(
 
     for path in sorted(item for item in payload_dir.rglob("*") if item.is_file()):
         rel = path.relative_to(payload_dir).as_posix()
+        payload_data = normalize_payload_text(path.read_bytes())
         ino += 1
         entries.append(
             Entry(
@@ -250,7 +258,7 @@ def build_payload_entries(
                     "rdevminor": 0,
                     "check": 0,
                 },
-                path.read_bytes(),
+                payload_data,
             )
         )
 
