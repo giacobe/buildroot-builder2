@@ -179,7 +179,16 @@ def payload_file_mode(path: Path, payload_dir: Path, executable_policy: str) -> 
     elif executable_policy == "none":
         executable = False
     else:
-        executable = path.suffix == ".sh"
+        # PolyLinux ships extensionless shell helpers. Their executable bits
+        # are not reliable in Windows checkouts, so apply the canonical modes
+        # explicitly while packaging.
+        executable = path.suffix == ".sh" or path.name in {
+            "nextlevel",
+            "prevlevel",
+            "process-helper",
+            "profile",
+            "startlevel",
+        }
     return stat.S_IFREG | (0o755 if executable else 0o644)
 
 
