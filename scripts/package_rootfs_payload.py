@@ -215,7 +215,12 @@ def build_payload_entries(
     for idx in range(1, len(archive_dest_parts) + 1):
         dirs.add(PurePosixPath(*archive_dest_parts[:idx]).as_posix())
 
-    for path in sorted(payload_dir.rglob("*")):
+    payload_paths = sorted(
+        path for path in payload_dir.rglob("*")
+        if ".git" not in path.relative_to(payload_dir).parts
+    )
+
+    for path in payload_paths:
         rel = path.relative_to(payload_dir).as_posix()
         archive_name = f"{archive_dest}/{rel}"
         parent = PurePosixPath(archive_name).parent.as_posix()
@@ -247,7 +252,7 @@ def build_payload_entries(
             )
         )
 
-    for path in sorted(item for item in payload_dir.rglob("*") if item.is_file()):
+    for path in (item for item in payload_paths if item.is_file()):
         rel = path.relative_to(payload_dir).as_posix()
         payload_data = normalize_payload_text(path.read_bytes())
         ino += 1
