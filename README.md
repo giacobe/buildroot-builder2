@@ -19,6 +19,11 @@ normalized to Unix LF. This protects shell scripts, login profiles, and helper
 commands when a repository was checked out or prepared on Windows. Files
 containing NUL bytes are treated as binary and are not modified.
 
+New and migrated lab payloads must also follow
+[`contracts/LAB-RUNTIME-CONTRACT.md`](contracts/LAB-RUNTIME-CONTRACT.md), including
+the canonical high-contrast `ls` palette, bounded parallel level construction, and
+the prohibition on client-side answer keys.
+
 Run these scripts on Linux. Buildroot requires a real Linux filesystem and host
 toolchain; do not build inside a Windows-synced directory.
 
