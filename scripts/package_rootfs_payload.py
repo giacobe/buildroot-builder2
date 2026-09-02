@@ -188,6 +188,7 @@ def payload_file_mode(path: Path, payload_dir: Path, executable_policy: str) -> 
             "process-helper",
             "profile",
             "startlevel",
+            "validate",
         }
     return stat.S_IFREG | (0o755 if executable else 0o644)
 

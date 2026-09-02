@@ -30,3 +30,9 @@ correctness oracle. Learners submit answers through the external exercise gradin
 form. Deterministic expected values belong only in repository test fixtures and the
 separate Microsoft Forms/Power Automate grading workflow, never in the packaged
 payload.
+
+A deterministic state-fingerprint command is permitted when a lab's answer is a
+key derived from the learner's completed artifact or filesystem state. Such a
+command must generate a key for every state, contain no expected state or answer,
+and provide no correct/incorrect feedback. The external grading workflow remains
+the only correctness oracle.
