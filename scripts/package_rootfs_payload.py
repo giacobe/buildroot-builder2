@@ -161,14 +161,11 @@ def write_newc_gzip(entries: list[Entry], output: Path) -> None:
 
 
 def clean_archive_dir(value: str) -> str:
-    """Return a safe relative archive destination; an empty string means /."""
     normalized = str(PurePosixPath(value.replace("\\", "/")))
-    if normalized in {"/", "."}:
-        return ""
     normalized = normalized.lstrip("/")
     normalized = normalize_archive_name(normalized).rstrip("/")
-    if not normalized:
-        return ""
+    if not normalized or normalized == ".":
+        raise argparse.ArgumentTypeError("archive destination must not be empty or /")
     if any(part in {"", ".", ".."} for part in normalized.split("/")):
         raise argparse.ArgumentTypeError("archive destination must not contain empty, . or .. parts")
     return normalized
@@ -214,11 +211,10 @@ def build_payload_entries(
     now = int(time.time())
     dirs: set[str] = set()
 
-    if archive_dest:
-        current = PurePosixPath(archive_dest)
-        archive_dest_parts = current.parts
-        for idx in range(1, len(archive_dest_parts) + 1):
-            dirs.add(PurePosixPath(*archive_dest_parts[:idx]).as_posix())
+    current = PurePosixPath(archive_dest)
+    archive_dest_parts = current.parts
+    for idx in range(1, len(archive_dest_parts) + 1):
+        dirs.add(PurePosixPath(*archive_dest_parts[:idx]).as_posix())
 
     payload_paths = sorted(
         path for path in payload_dir.rglob("*")
@@ -227,9 +223,9 @@ def build_payload_entries(
 
     for path in payload_paths:
         rel = path.relative_to(payload_dir).as_posix()
-        archive_name = f"{archive_dest}/{rel}" if archive_dest else rel
+        archive_name = f"{archive_dest}/{rel}"
         parent = PurePosixPath(archive_name).parent.as_posix()
-        while parent and parent != "." and (not archive_dest or parent != archive_dest):
+        while parent and parent not in {".", archive_dest}:
             dirs.add(parent)
             parent = PurePosixPath(parent).parent.as_posix()
         if path.is_dir():
@@ -263,7 +259,7 @@ def build_payload_entries(
         ino += 1
         entries.append(
             Entry(
-                f"{archive_dest}/{rel}" if archive_dest else rel,
+                f"{archive_dest}/{rel}",
                 {
                     "ino": ino,
                     "mode": payload_file_mode(path, payload_dir, executable_policy),
@@ -284,65 +280,14 @@ def build_payload_entries(
     return entries
 
 
-def apply_permissions(
-    entries: list[Entry],
-    permissions_file: Path,
-    archive_dest: str,
-) -> None:
-    """Apply Buildroot device-table file modes and ownership to payload entries."""
-    by_name = {entry.name: entry for entry in entries}
-
-    for line_number, raw_line in enumerate(
-        permissions_file.read_text(encoding="utf-8").splitlines(), start=1
-    ):
-        line = raw_line.partition("#")[0].strip()
-        if not line:
-            continue
-        fields = line.split()
-        if len(fields) < 5:
-            raise ValueError(
-                f"invalid permissions entry at {permissions_file}:{line_number}"
-            )
-
-        path, entry_type, mode_text, uid_text, gid_text = fields[:5]
-        if entry_type not in {"f", "d"}:
-            continue
-        relative = path.lstrip("/")
-        archive_name = f"{archive_dest}/{relative}" if archive_dest else relative
-        entry = by_name.get(archive_name)
-        if entry is None:
-            raise ValueError(
-                f"permissions path is not in payload: {path} "
-                f"({permissions_file}:{line_number})"
-            )
-
-        permission_bits = int(mode_text, 8)
-        entry.fields["mode"] = stat.S_IFMT(entry.fields["mode"]) | permission_bits
-        entry.fields["uid"] = int(uid_text, 0)
-        entry.fields["gid"] = int(gid_text, 0)
-
-
 def merge_entries(original: list[Entry], payload: list[Entry]) -> list[Entry]:
-    payload_by_name = {entry.name: entry for entry in payload}
+    payload_names = {entry.name for entry in payload}
     merged: list[Entry] = []
     seen: set[str] = set()
 
     for entry in original:
         name = normalize_archive_name(entry.name)
-        replacement = payload_by_name.get(name)
-        if replacement is not None:
-            # Keep existing directories in their original archive positions.
-            # The kernel initramfs unpacker must encounter parents before their
-            # children; moving a top-level directory such as usr to the end can
-            # make earlier usr/lib entries disappear during unpacking.
-            if stat.S_ISDIR(entry.fields["mode"]) and stat.S_ISDIR(
-                replacement.fields["mode"]
-            ):
-                entry.name = name
-                merged.append(entry)
-            else:
-                merged.append(replacement)
-            seen.add(name)
+        if name in payload_names:
             continue
         entry.name = name
         merged.append(entry)
@@ -389,9 +334,7 @@ def write_manifest(
             [
                 "# Validation Notes",
                 "",
-                f"- Payload directory merged into `/{archive_dest}`."
-                if archive_dest
-                else "- Payload directory merged into `/` as a rootfs overlay.",
+                f"- Payload directory merged into `{archive_dest}/`.",
                 "- Existing archive entries with the same paths were replaced.",
                 "- bzImage was copied unchanged.",
                 "- Boot validation was not run by this script.",
@@ -434,8 +377,6 @@ def package_rootfs(args: argparse.Namespace) -> None:
         original_entries = parse_newc(gz.read())
     max_ino = max((entry.fields.get("ino", 0) for entry in original_entries), default=0)
     payload_entries = build_payload_entries(payload_dir, args.archive_dest, max_ino, args.executable_policy)
-    if args.permissions_file:
-        apply_permissions(payload_entries, args.permissions_file.resolve(), args.archive_dest)
     merged_entries = merge_entries(original_entries, payload_entries)
 
     shutil.copyfile(bzimage, output_bzimage)
@@ -484,12 +425,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--archive-dest",
         default="root",
         type=clean_archive_dir,
-        help="Destination inside rootfs, default: root; use / for a rootfs overlay.",
-    )
-    parser.add_argument(
-        "--permissions-file",
-        type=Path,
-        help="Buildroot device-table file used to restore payload modes and ownership.",
+        help="Destination directory inside the rootfs archive, default: root.",
     )
     parser.add_argument(
         "--executable-policy",
