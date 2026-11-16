@@ -8,6 +8,8 @@ PACKAGER="$SCRIPT_DIR/package_rootfs_payload.py"
 REPO_URL=
 REF=
 PAYLOAD_SUBDIR=.
+ARCHIVE_DEST=root
+PERMISSIONS_FILE=
 BASELINE_DIR=
 OUTPUT_DIR=
 OUTPUT_PREFIX=packaged
@@ -27,6 +29,8 @@ Required:
 Options:
   --ref REF                  Git branch, tag, or commit to checkout
   --payload-subdir DIR       Subdirectory inside the cloned repo to package, default: .
+  --archive-dest DIR         Destination inside rootfs, default: /root; use / for a rootfs overlay
+  --permissions-file FILE    Repository-relative device-table file with payload modes and owners
   --output-prefix NAME       Output names: NAME.bzImage and NAME.rootfs.cpio.gz
   --rename-to-install FILE   Remove install.sh and copy FILE to install.sh in the staged payload
   --force                    Overwrite output files
@@ -38,6 +42,8 @@ while [ "$#" -gt 0 ]; do
     --repo) REPO_URL=$2; shift 2 ;;
     --ref) REF=$2; shift 2 ;;
     --payload-subdir) PAYLOAD_SUBDIR=$2; shift 2 ;;
+    --archive-dest) ARCHIVE_DEST=$2; shift 2 ;;
+    --permissions-file) PERMISSIONS_FILE=$2; shift 2 ;;
     --baseline) BASELINE_DIR=$2; shift 2 ;;
     --output) OUTPUT_DIR=$2; shift 2 ;;
     --output-prefix) OUTPUT_PREFIX=$2; shift 2 ;;
@@ -76,6 +82,16 @@ fi
 PAYLOAD_SOURCE="$CLONE_DIR/$PAYLOAD_SUBDIR"
 [ -d "$PAYLOAD_SOURCE" ] || { echo "payload subdirectory not found: $PAYLOAD_SOURCE" >&2; exit 2; }
 
+if [ -n "$PERMISSIONS_FILE" ]; then
+  PERMISSIONS_FILE="$CLONE_DIR/$PERMISSIONS_FILE"
+elif [ "$(basename "$PAYLOAD_SUBDIR")" = rootfs-overlay ] && [ -f "$PAYLOAD_SOURCE/../permissions.txt" ]; then
+  PERMISSIONS_FILE="$PAYLOAD_SOURCE/../permissions.txt"
+fi
+[ -z "$PERMISSIONS_FILE" ] || [ -f "$PERMISSIONS_FILE" ] || {
+  echo "permissions file not found: $PERMISSIONS_FILE" >&2
+  exit 2
+}
+
 rm -rf "$STAGE_DIR"
 mkdir -p "$STAGE_DIR"
 tar -C "$PAYLOAD_SOURCE" --exclude=.git -cf - . | tar -C "$STAGE_DIR" -xf -
@@ -102,11 +118,15 @@ fi
 
 FORCE_ARG=
 [ "$FORCE" -eq 0 ] || FORCE_ARG=--force
+PERMISSIONS_ARG=()
+[ -z "$PERMISSIONS_FILE" ] || PERMISSIONS_ARG=(--permissions-file "$PERMISSIONS_FILE")
 
 python3 "$PACKAGER" \
   --bzimage "$BZIMAGE" \
   --rootfs "$ROOTFS" \
   --payload-dir "$STAGE_DIR" \
+  --archive-dest "$ARCHIVE_DEST" \
+  "${PERMISSIONS_ARG[@]}" \
   --output-dir "$OUTPUT_DIR" \
   --output-bzimage-name "${OUTPUT_PREFIX}.bzImage" \
   --output-rootfs-name "${OUTPUT_PREFIX}.rootfs.cpio.gz" \
