@@ -47,27 +47,6 @@ scripts/03-package-payload.sh \
   --output-prefix polybandit3
 ```
 
-### Rootfs-overlay payloads
-
-Some labs (the netsec VMs) ship a `rootfs-overlay/` folder whose files go
-anywhere in the filesystem, plus a `permissions.txt` Buildroot device table
-(`path type mode uid gid ...`) for exact modes and owners, setuid included.
-Package them at `/`:
-
-```sh
-scripts/03-package-payload.sh \
-  --repo https://github.com/giacobe/netsec-snort-defender.git \
-  --payload-subdir rootfs-overlay \
-  --archive-dest / \
-  --baseline artifacts/<snort-defender-baseline-dir> \
-  --output artifacts/snort-defender \
-  --output-prefix snort-defender
-```
-
-`--permissions-file FILE` names the device table (relative to the repo); a
-`permissions.txt` next to the payload folder is used automatically. Paths it
-lists that are not in the payload are an error.
-
 The packaging stage writes:
 
 ```text
@@ -97,8 +76,6 @@ Current sets and their intended lab payloads:
 | `basic-compression` | `basic` plus archive, compression, encoding, and inspection tools | 10, 13, 14 |
 | `basic-compression-networking` | `basic-compression` plus IP, DNS, HTTP, and SSH tools | 9 |
 | `basic-processes` | `basic` plus procps-ng process inspection and priority tools | 7 |
-| `snort-defender` | Snort IDS, tcpdump, Python 3, glibc: the defender VM of the Snort lab | netsec-snort-defender |
-| `snort-attacker` | Snort, nmap/nping, tcpdump, Python 3, glibc: the attacker and noise VMs | netsec-snort-attacker, netsec-snort-noise |
 
 Every configuration directory contains all four authoritative inputs:
 
